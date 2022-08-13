@@ -2,6 +2,8 @@
     "cSpell.words": [
         "backref",
         "dateutil",
-        "fyyur"
+        "fyyur",
+        "ilike",
+        "joinedload"
     ]
 }
