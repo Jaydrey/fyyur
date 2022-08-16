@@ -263,7 +263,7 @@ def create_venue_form():
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
     form = VenueForm(request.form)
-    # TODO: insert form data as a new Venue record in the db, instead    
+    # TODO: insert form data as a new Venue record in the db, instead
     if form.validate_on_submit():
 
         created_venue = Venue(
@@ -546,7 +546,7 @@ def create_artist_submission():
                 name=form.name.data,
                 state=form.state.data,
                 phone=form.phone.data,
-                website=form.website.data,
+                website=form.website_link.data,
                 genres=",".join(form.genres.data),
                 image_link=form.image_link.data,
                 facebook_link=form.facebook_link.data,
@@ -566,7 +566,8 @@ def create_artist_submission():
         finally:
             db.session.close()
     else:
-        flash(" Artist " + request.form['name'] + "could not be listed.")
+        print(form.errors)
+        flash(" Artist could not be validated.")
 
     # called upon submitting the new artist listing form
     # TODO: insert form data as a new Venue record in the db, instead
