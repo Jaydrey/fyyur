@@ -49,7 +49,7 @@ class Venue(db.Model):
     website = db.Column(db.String())
     seeking_talent = db.Column(db.Boolean(), default=False)
     seeking_description = db.Column(db.String())
-    genres = db.Column(ARRAY(String))
+    genres = db.Column(db.ARRAY(db.String(120)))
     shows = db.relationship('Show', backref='Venue', lazy='dynamic')
 
     def __init__(self, name, city, state, address, phone, image_link, facebook_link, website, seeking_talent, seeking_description, genres):
@@ -89,17 +89,12 @@ class Artist(db.Model):
     image_link = db.Column(db.String(120))
     shows = db.relationship('Show', backref='Artist', lazy=True)
 
-    # past_shows model
-    # upcoming_shows
-    # past_shows_count = db.Column(db.Integer(), db.ForeignKey)
-    # upcoming_shows_count
-
     def __repr__(self):
         return f'{__class__.__name__}(name={self.name}, )'
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
-# TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
+    # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
 
 
 class Show(db.Model):
@@ -190,22 +185,22 @@ def search_venues():
     # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
     # search for Hop should return "The Musical Hop".
     # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
-    search_term = request.form['search_term']
-    query = Venue.query.filter(Venue.name.ilike(f'%{search_term}%'))
-    response = []
-    response.append({'count': len(list(query))})
-    response[-1]['data'] = []
-    for result in list(query):
-        all_shows = result.shows.filter(Show.start_time > datetime.now()).all()
-        response[-1]['data'].append(
-            {
-                'id': result.id,
-                'name': result.name,
-                'num_upcoming_shows': len(list(all_shows))
-            }
-        )
+    search_term = request.form.get('search_term', '')
+    search_term = '%' + search_term + '%'
+    count = Venue.query.filter(Venue.name.ilike(search_term)).count()
 
-    print(response)
+    data = []
+    for i in Venue.query.filter(Venue.name.ilike(search_term)):
+        res = {
+            'id': i.id,
+            'name': i.name,
+            'num_upcoming_shows': Show.query.filter_by(venue_id=i.id).filter(Show.start_time >= datetime.today()).count()
+        }
+        data.append(res)
+        response = {
+            'count': count,
+            'data': data
+        }
     return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
 
 
@@ -225,7 +220,7 @@ def show_venue(venue_id):
         data['website'] = venue_query.website
         data['facebook_link'] = venue_query.facebook_link
         data['seeking_talent'] = venue_query.seeking_talent
-        data['description'] = venue_query.description
+        data['seeking_description'] = venue_query.seeking_description
         data['image-link'] = venue_query.image_link
         past_shows = Show.query.options(db.joinedload(Show.Venue)).filter(
             Show.venue_id == venue_id).filter(Show.start_time <= datetime.now()).all()
@@ -273,7 +268,7 @@ def create_venue_form():
 def create_venue_submission():
     print(request.form.get('name'))
     # TODO: insert form data as a new Venue record in the db, instead
-    
+
     try:
         created_venue = Venue(
             name=request.form.get('name'),
@@ -284,7 +279,8 @@ def create_venue_submission():
             image_link=request.form.get('image_link'),
             facebook_link=request.form.get('facebook_link'),
             website=request.form.get('website'),
-            seeking_talent= True if request.form.get('seeking_talent')=='y' else False,
+            seeking_talent=True if request.form.get(
+                'seeking_talent') == 'y' else False,
             seeking_description=request.form.get('seeking_description'),
             genres=request.form.getlist('genres'),
         )
@@ -306,8 +302,8 @@ def create_venue_submission():
         # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
         flash(f'Venue {created_venue.name} could not be created.')
     finally:
-      db.session.close()
-      return render_template('pages/home.html')
+        db.session.close()
+        return render_template('pages/home.html')
 
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
