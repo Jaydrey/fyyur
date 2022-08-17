@@ -50,7 +50,7 @@ class Venue(db.Model):
     seeking_talent = db.Column(db.Boolean, default=False)
     seeking_description = db.Column(db.Text)
     genres = db.Column(db.ARRAY(db.String(120)))
-    shows = db.relationship('Show', backref='venue', lazy=True)
+    shows = db.relationship('Show', backref='Venue', lazy='dynamic')
 
     def __repr__(self):
         return f'{__class__.__name__}(name=\'{self.name}\')'
@@ -70,7 +70,7 @@ class Artist(db.Model):
     facebook_link = db.Column(db.String(120))
     seeking_venue = db.Column(db.Boolean(), default=False)
     seeking_description = db.Column(db.String(120))
-    shows = db.relationship('Show', backref='artist', lazy=True)
+    shows = db.relationship('Show', backref='Artist', lazy=True)
 
     def __repr__(self):
         return f'{__class__.__name__}(name={self.name}, )'
@@ -80,8 +80,7 @@ class Show(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id'), nullable=False)
-    artist_id = db.Column(db.Integer, db.ForeignKey(
-        'Artist.id'), nullable=False)
+    artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'), nullable=False)
     start_time = db.Column(db.DateTime, nullable=False)
 
     def __repr__(self):
@@ -549,17 +548,16 @@ def create_show_submission():
         try:
             db.session.add(new_show)
             db.session.commit()
+            flash('Show ' + {new_show.name} +  ' was successfully listed!')
 
         except Exception as e:
-            print(e)
-            flash(f'An error occurred. Show couldn\'t be created')
             db.session.rollback()
-            return render_template('forms/new_show.html')
+            print(sys.exc_info())
+            flash(f'An error occurred. Show couldn\'t be created')
         finally:
             db.session.close()
-    else:
-        flash('Show was successfully listed!')
-        return redirect(url_for('shows'))
+    
+    return render_template('pages/home.html')
 
 
 @app.errorhandler(404)
