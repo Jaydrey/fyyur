@@ -9,15 +9,25 @@ import sys
 from venv import create
 import dateutil.parser
 import babel
-from flask import Flask, render_template, request, Response, flash, redirect, url_for
+from flask import (Flask,
+                   render_template,
+                   request,
+                   Response,
+                   flash,
+                   redirect,
+                   url_for)
 from flask_moment import Moment
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import ARRAY, String
+from sqlalchemy import (ARRAY,
+                        String,
+                        desc)
 import logging
 from logging import Formatter, FileHandler
 from flask_wtf import FlaskForm as BaseForm
 from forms import *
+from models import db, Artist, Venue, Show
+
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -27,64 +37,6 @@ moment = Moment(app)
 app.config.from_object('config')
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
-
-# TODO: connect to a local postgresql database
-
-#----------------------------------------------------------------------------#
-# Models.
-#----------------------------------------------------------------------------#
-
-
-class Venue(db.Model):
-    __tablename__ = 'Venue'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String())
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
-    address = db.Column(db.String(120))
-    phone = db.Column(db.String(120))
-    image_link = db.Column(db.String(500))
-    facebook_link = db.Column(db.String(120))
-    website = db.Column(db.String())
-    seeking_talent = db.Column(db.Boolean, default=False)
-    seeking_description = db.Column(db.Text)
-    genres = db.Column(db.ARRAY(db.String(120)))
-    shows = db.relationship('Show', backref='Venue', lazy='dynamic')
-
-    def __repr__(self):
-        return f'{__class__.__name__}(name=\'{self.name}\')'
-
-
-class Artist(db.Model):
-    __tablename__ = 'Artist'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String())
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
-    phone = db.Column(db.String(120))
-    website = db.Column(db.String(300))
-    genres = db.Column(db.String(120))
-    image_link = db.Column(db.String(500))
-    facebook_link = db.Column(db.String(120))
-    seeking_venue = db.Column(db.Boolean(), default=False)
-    seeking_description = db.Column(db.String(120))
-    shows = db.relationship('Show', backref='Artist', lazy=True)
-
-    def __repr__(self):
-        return f'{__class__.__name__}(name={self.name}, )'
-
-class Show(db.Model):
-    __tablename__ = 'Show'
-
-    id = db.Column(db.Integer, primary_key=True)
-    venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id'), nullable=False)
-    artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'), nullable=False)
-    start_time = db.Column(db.DateTime, nullable=False)
-
-    def __repr__(self):
-        return f'{__class__.__name__}(id={self.start_time}, )'
 
 #----------------------------------------------------------------------------#
 # Filters.
@@ -109,8 +61,10 @@ app.jinja_env.filters['datetime'] = format_datetime
 
 @app.route('/')
 def index():
-
-    return render_template('pages/home.html')
+    venues = Venue.query.order_by(desc(Venue.created_date)).limit(10).all()
+    artists = Artist.query.order_by(desc(Artist.created_date)).limit(10).all()
+    return render_template('pages/home.html', venues=venues, artists=artists)
+    # return render_template('pages/home.html')
 
 
 #  Venues
@@ -118,7 +72,7 @@ def index():
 
 @app.route('/venues')
 def venues():
-    
+
     venue_all = Venue.query.all()
     places = set()
     all_data = []
@@ -153,7 +107,7 @@ def venues():
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
-    
+
     search_term = request.form.get('search_term', '')
     search_term = '%' + search_term + '%'
     count = Venue.query.filter(Venue.name.ilike(search_term)).count()
@@ -504,7 +458,6 @@ def create_artist_submission():
         print(form.errors)
         flash(" Artist could not be validated.")
 
-
     return render_template('pages/home.html')
 
 
@@ -548,7 +501,7 @@ def create_show_submission():
         try:
             db.session.add(new_show)
             db.session.commit()
-            flash('Show ' + {new_show.name} +  ' was successfully listed!')
+            flash('Show ' + {new_show.name} + ' was successfully listed!')
 
         except Exception as e:
             db.session.rollback()
@@ -556,7 +509,7 @@ def create_show_submission():
             flash(f'An error occurred. Show couldn\'t be created')
         finally:
             db.session.close()
-    
+
     return render_template('pages/home.html')
 
 

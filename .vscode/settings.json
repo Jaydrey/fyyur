@@ -5,5 +5,8 @@
         "fyyur",
         "ilike",
         "joinedload"
+    ],
+    "python.analysis.extraPaths": [
+        "./templates"
     ]
 }
