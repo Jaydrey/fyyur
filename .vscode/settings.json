@@ -4,7 +4,8 @@
         "dateutil",
         "fyyur",
         "ilike",
-        "joinedload"
+        "joinedload",
+        "phonenumbers"
     ],
     "python.analysis.extraPaths": [
         "./templates"

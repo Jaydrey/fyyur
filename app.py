@@ -18,7 +18,7 @@ from flask import (Flask,
                    url_for)
 from flask_moment import Moment
 from flask_migrate import Migrate
-from flask_sqlalchemy import SQLAlchemy
+
 from sqlalchemy import (ARRAY,
                         String,
                         desc)
@@ -26,7 +26,7 @@ import logging
 from logging import Formatter, FileHandler
 from flask_wtf import FlaskForm as BaseForm
 from forms import *
-from models import db, Artist, Venue, Show
+from models import db,  Artist, Venue, Show
 
 #----------------------------------------------------------------------------#
 # App Config.
@@ -35,7 +35,7 @@ from models import db, Artist, Venue, Show
 app = Flask(__name__)
 moment = Moment(app)
 app.config.from_object('config')
-db = SQLAlchemy(app)
+db.init_app(app)
 migrate = Migrate(app, db)
 
 #----------------------------------------------------------------------------#
@@ -64,7 +64,6 @@ def index():
     venues = Venue.query.order_by(desc(Venue.created_date)).limit(10).all()
     artists = Artist.query.order_by(desc(Artist.created_date)).limit(10).all()
     return render_template('pages/home.html', venues=venues, artists=artists)
-    # return render_template('pages/home.html')
 
 
 #  Venues
@@ -516,11 +515,12 @@ def create_show_submission():
 @app.errorhandler(404)
 def not_found_error(error):
     return render_template('errors/404.html'), 404
-
+    
 
 @app.errorhandler(500)
 def server_error(error):
     return render_template('errors/500.html'), 500
+
 
 
 if not app.debug:
