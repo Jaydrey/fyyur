@@ -26,6 +26,9 @@ from flask_migrate import Migrate
 from sqlalchemy import (ARRAY,
                         String,
                         desc)
+
+
+
 import logging
 from logging import Formatter, FileHandler
 from flask_wtf import FlaskForm as BaseForm
