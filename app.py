@@ -13,9 +13,6 @@ import dateutil.parser
 import babel
 
 
-#
-
-
 from flask import (Flask,
                    render_template,
                    request,
@@ -29,7 +26,6 @@ from flask_migrate import Migrate
 from sqlalchemy import (ARRAY,
                         String,
                         desc)
-
 
 
 import logging
